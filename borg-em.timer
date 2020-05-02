@@ -1,0 +1,9 @@
+[Unit]
+Description=Borg-em backup
+
+[Timer]
+WakeSystem=false
+OnCalendar=*-*-* 04:00:00
+
+[Install]
+WantedBy=timers.target

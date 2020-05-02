@@ -1,0 +1,72 @@
+#!/bin/bash
+
+# Make sure only root can run our script
+if [[ $EUID -ne 0 ]]; then
+    echo "This script must be run as root" 1>&2
+    exit 1
+fi
+
+# Directory of this script
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+
+if [ -z $1 ]
+then
+    echo "Installation borg-em ....."
+    # Symlink to /bin/ &configuration
+    ln -sf $DIR/borg-em        /usr/bin/borg-em
+    if [ ! -f $DIR/borg-em.conf ]
+    then
+        echo "  New config file created. Must edit it before backup"
+        cp borg-em.conf.sample borg-em.conf
+    fi
+    ln -sf $DIR/borg-em.conf   /etc/borg-em.conf
+    chmod 700 /usr/bin/borg-em
+    chmod 600 /etc/borg-em.conf
+
+    # Symlink systemd units (services and timers)
+    ln -sf $DIR/borg-em.service /etc/systemd/system/borg-em.service
+    ln -sf $DIR/borg-em.timer /etc/systemd/system/borg-em.timer
+
+    # Reload systemd just in case unit files changed
+    systemctl daemon-reload
+
+    systemctl enable borg-em.timer
+    systemctl start borg-em.timer
+
+    # Print advice
+    echo "Install Done!"
+    echo "  service borg-em.service & borg-em.timer was setuped. "
+    echo "  The timer started."
+    echo ""
+    echo "Now you can:"
+    echo "  sudo systemctl stop|start borg-em.timer   #stop or start timer"
+    echo "  sudo ./borg-em.install uninstall          #undo install "
+    echo "  borg-em                                   #run backup"
+    echo "  borg-em list                              #show list of achive"
+    echo "  vim borg-em.timer                         #config timer"
+    echo "  vim borg-em.conf                          #edit config"
+
+elif [ $1 = "uninstall" ]
+then
+    echo "Undo installation borg-em ....."
+    
+    
+    rm -f /usr/bin/borg-em
+    rm -f /etc/borg-em.conf
+
+    systemctl disable borg-em.timer
+    
+    # Symlink systemd units (services and timers)
+    rm -f /etc/systemd/system/borg-em.service
+    rm -f /etc/systemd/system/borg-em.timer
+
+    # Reload systemd just in case unit files changed
+    systemctl daemon-reload
+    systemctl reset-failed
+
+    echo "Uninstall Done!!"
+    echo "All service & timer was removed."
+
+else
+    echo "Unkonw operation!!"
+fi

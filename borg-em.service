@@ -1,0 +1,7 @@
+[Unit]
+Description=Borg-em backup
+
+[Service]
+Type=simple
+KillMode=none
+ExecStart=/usr/bin/borg-em

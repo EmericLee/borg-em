@@ -1,0 +1,247 @@
+#!/usr/bin/env bash
+
+#==================================================
+#           em borg script (v0.2)
+# By emeric                     kometo@gmial.com
+#==================================================
+
+BORG_EM_VERSION="0.3"
+BORG_TEMP_DIR="tmp-borg"
+BORG_SNAP_SIZE="1G"
+BORG_PREFIX="$HOSTNAME"
+BORG_ARCHIVE="${BORG_PREFIX}-"`date '+%Y-%m-%d-%H%M'`
+
+# ------------  CUSTOM CONFIGS  -------------------
+
+# User Configs
+# BORG_REPO='ssh://backup@58.57.39.74:10002/./'  #SSH use rsakey and borg root path is seting
+#  OR
+# BORG_REPO='/mnt/borgs/bsv-debian'  #SSH use rsakey
+# BORG_PASSPHRASE=''
+# Backups=('dir:/boot:boot' 'lvm:bsv-deian-app-vg/root:lv-root' 'lvm:vg-store/lv-store:lv-store')
+
+# LOAD user config from file
+#source $(dirname "${BASH_SOURCE[0]}")/borg-em.conf
+source /etc/borg-em.conf
+
+#export to borg backup 
+export BORG_REPO                
+export BORG_PASSPHRASE
+
+# CHECK BORG_TEMP_DIR
+if [ -d /mnt/$BORG_TEMP_DIR ]
+then
+	echo -e "\n\n !!!!!! /mnt/$BORG_TEMP_DIR directory exists. STOP for Danger  !!!!!! \n\n"
+  echo -e "Check the directory config. Delete the directory if it is Useless.\n\n"
+  exit 1
+fi
+
+# maniplating backup options
+backup_modes=()
+backup_paths=()
+backup_names=()
+for backup in ${Backups[@]}
+do
+  OLD_IFS="$IFS";  IFS=":"; arr=($backup);  IFS="$OLD_IFS"
+  if [ ${#arr[@]} = 3 ]
+  then
+    backup_modes+=(${arr[0]})
+    backup_paths+=(${arr[1]})
+    backup_names+=(${arr[2]})
+  else
+    echo 'ERROR'${#arr[@]}
+    exit 1
+  fi
+done
+
+# ---------------  redirect call to borg backup  ----------------------
+if [ $1 ]
+then
+  echo -e "\n Em Borg Script v$BORG_EM_VERSION  (By emeric)"
+  echo -e "-    automatic backup with borg"
+  echo -e "\n Call Borg:"
+  echo -e "────────────────────────────────────────────────────────────"
+  borg $1
+  exit
+fi
+
+# ---------------  FUNCTIONS  ----------------------
+LOG_ECHO=""
+function ec {
+  echo -e "$1"
+  LOG_ECHO="$LOG_ECHO \n $(date '+%Y-%m-%d-%H:%M:%S') : $1"
+}
+
+function lmail {
+  if [ -n "$MAIL_TO" ];then
+    
+    # LOG_MSG=$( journalctl _PID=$$ --since -2h --no-pager --output=cat )
+    # LOG_MSG=$( journalctl _PID=$$ -u borg-em-srv --since -2h --no-pager --output=cat )
+    # or LOG_MSG=LOG_ECHO 
+
+    sendmail -t <<MAIL
+To: $MAIL_TO
+From: BorgEm
+Subject:$1 
+Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset=UTF-8
+$2
+MAIL
+
+  fi
+}
+
+function main {
+
+  ec "\n\n"
+  ec " Em Borg Script v$BORG_EM_VERSION  "
+  ec " --  automatic backup with borg."
+  ec "     Writte by emeric (kometo@gmail.com)"
+  ec "\n"
+  ec " HOST:      $HOSTNAME "
+  ec " BACKUPS:   ${Backups[*]}"
+  ec " BORG_REPO: $BORG_REPO"
+  ec " ARCHIVE:   $BORG_REPO::$BORG_ARCHIVE"
+  ec " MAIL_TO:   $MAIL_TO"
+  ec "\n\n"
+  
+  
+  #####################################
+  #prepare....
+  ec "────────────────────────────────────────────────────────────"
+  ec ">>>> Prepare Data.......\n"
+
+  # Prepare info.backup
+  echo -e "\n\nBackup config string:\n--------------------------------------" >> /mnt/$BORG_TEMP_DIR/info.backup
+  echo "${Backups[@]}" >> /mnt/$BORG_TEMP_DIR/info.backup
+  echo -e "\n\nThe output of (df):\n--------------------------------------" >> /mnt/$BORG_TEMP_DIR/info.backup
+  df -hT | grep --color=never -v '/docker/\|tmpfs' >> /mnt/$BORG_TEMP_DIR/info.backup
+  echo -e "\n\nThe output of (lvs):\n--------------------------------------" >> /mnt/$BORG_TEMP_DIR/info.backup
+  lvs >> /mnt/$BORG_TEMP_DIR/info.backup
+
+  # Prepare configs
+  for index in "${!backup_modes[@]}"
+  do
+    backup_mode=${backup_modes["$index"]}
+    backup_path=${backup_paths["$index"]}
+    backup_name=${backup_names["$index"]}
+    if [ $backup_mode = 'dir' ]
+    then
+      ec ">> [dir] $backup_path <==> $backup_name"
+      mkdir /mnt/$BORG_TEMP_DIR/$backup_name
+      mount --bind $backup_path /mnt/$BORG_TEMP_DIR/$backup_name
+    elif [ $backup_mode = 'lvm' ]
+    then
+      ec ">> [lvm] $backup_path <==> $backup_name"
+      #create snapshot
+      # /dev/${backup_path%/*}/emborg-snapshot-$backup_name
+      mkdir /mnt/$BORG_TEMP_DIR/$backup_name
+      lvcreate -s -n "emborg-snapshot-$backup_name" -L $BORG_SNAP_SIZE $backup_path    
+      mount ${backup_path%/*}/emborg-snapshot-$backup_name /mnt/$BORG_TEMP_DIR/$backup_name
+    else
+      ec ">> !!!ERROR!!! Unknow mode  $backup_mode"
+      exit
+    fi
+
+  done
+
+
+  ########################################
+  #   Do backup
+  ec "────────────────────────────────────────────────────────────"
+  ec ">>>> Borg backup........................................\n"
+
+  # -v verbose -s show stats, -p show process, -x one-file-system
+  ec ">> Backup...."
+  borg create  -v -s              \
+    --compression lz4             \
+    --exclude-caches              \
+    --exclude 'home/*/.cache'     \
+    --exclude 'var/cache'         \
+    --exclude 'var/tmp'           \
+    --exclude 'tmp'               \
+    --exclude 'lost+found'        \
+    --exclude 'mnt'               \
+    --exclude '*.iso'             \
+    ::$BORG_ARCHIVE               \
+    .                             \
+    2>&1                             # Route stderr
+  exit_code=$?                       # keep code
+
+  # Prune the repo of extra backups
+  ec "\n\n>> Prune...."
+  borg prune -v --prefix $BORG_PREFIX     \
+    --keep-hourly=24                      \
+    --keep-daily=30                       \
+    --keep-monthly=24                     \
+    --keep-yearly=100
+
+  ec "\n>> Print disk usage...."
+  df -hT | grep --color=never -v '/docker/\|tmpfs'
+
+  ########################################
+  #   Cleare temprery
+  ec "────────────────────────────────────────────────────────────"
+  ec ">>>> Clear Temporary Data.......\n"
+
+  for index in "${!backup_modes[@]}"
+  do
+    backup_mode=${backup_modes["$index"]}
+    backup_path=${backup_paths["$index"]}
+    backup_name=${backup_names["$index"]}
+    if [ $backup_mode = 'dir' ]
+    then
+      ec ">> [dir] $backup_path <==> $backup_name"
+      umount /mnt/$BORG_TEMP_DIR/$backup_name
+      rm -df /mnt/$BORG_TEMP_DIR/$backup_name
+    elif [ $backup_mode = 'lvm' ]
+    then
+      ec ">> [lvm] $backup_path <==> $backup_name"
+      umount /mnt/$BORG_TEMP_DIR/$backup_name
+      rm -df /mnt/$BORG_TEMP_DIR/$backup_name
+      lvremove -f ${backup_path%/*}/emborg-snapshot-$backup_name
+    fi
+  done
+
+  ########################################
+  #   finishing
+  if [ $exit_code -ne 0 ]
+  then
+    ec "\n\n"
+    ec "────────────────────────────────────────────────────────────"
+    ec "-          Backup Failed  (code:$exit_code $?)       "
+    ec "────────────────────────────────────────────────────────────"
+  else
+    ec "\n\n"
+    ec "────────────────────────────────────────────────────────────"
+    ec "-                ALL DONE  "
+    ec "────────────────────────────────────────────────────────────"
+  fi
+  return $exit_code
+}
+
+
+# ---------------     MAIN   ----------------------
+
+# Create & Moving into the temprary directory, 
+# the relative path will be backup as the root of archive
+mkdir /mnt/$BORG_TEMP_DIR
+cd /mnt/$BORG_TEMP_DIR
+
+# Run main
+main | tee -a borg.log
+exit_code=$?                       # keep code
+
+# Get log and send mail
+log=$(<borg.log)
+if [ $exit_code -ne 0 ]
+then
+  lmail "Borg Failed ($HOSTNAME)" "$log"
+else
+  lmail "Borg Done ($HOSTNAME)" "$log"
+fi
+
+#Clear ALL
+rm -f /mnt/$BORG_TEMP_DIR/*
+rm -df /mnt/$BORG_TEMP_DIR
+exit $exit_code

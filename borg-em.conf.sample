@@ -1,0 +1,21 @@
+
+# BACKUPS Config
+# ( mode:path:name .... )
+# mode = dir
+#   path : absolut path to backup , etc /boot
+#   name : the name of target dir in the backup
+# mode = lvm
+#   path : the lv dev path. etc /dev/vg/lv
+#   name : the name of target dir in the backup
+# Examples
+#   Backups=('dir:/boot:boot')
+#   Backups=('dir:/boot:boot' 'lvm:/dev/bsv-deian-app-vg/root:lv-root' 'lvm:/dev/vg-store/lv-store:lv-store') 
+Backups=('dir:/:root')
+
+# BORG REPO
+# BORG_REPO='ssh://backup@58.57.39.74:10002/./'  #SSH use rsakey and borg root path is seting
+# BORG_REPO='/path/to/repo'                      # user local repo
+BORG_REPO='/mnt/borgs/debian'                #SSH use rsakey
+BORG_PASSPHRASE=''
+
+MAIL_TO=uer@mail.com
