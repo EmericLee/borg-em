@@ -11,15 +11,15 @@ Writte by emeric (kometo@gmail.com)
 ## Quick install
     
     git clone https://github.com/EmericLee/borg-em.git                  #Clone source to some where
-    cp borg-em.conf.sample borg-em.conf && vim borg-em.conf             #edit config file as comments
     chmod 700 borg-em.install && ./borg-em.install                      #Install service and timer
+    cp borg-em.conf.sample borg-em.conf && vim borg-em.conf             #edit config file as comments
+    borg-em list                                                        #show list of achive & check config
 
 ## Quick command
     
     sudo systemctl stop|start borg-em.timer   #stop or start timer
     sudo ./borg-em.install uninstall          #undo install 
     borg-em                                   #run backup directly
-    borg-em list                              #show list of achive
     borg-em list                              #show list of achive
     vim borg-em.conf                          #edit config anytime
     vim borg-em.timer                         #config timer

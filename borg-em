@@ -21,7 +21,7 @@ BORG_ARCHIVE="${BORG_PREFIX}-"`date '+%Y-%m-%d-%H%M'`
 # Backups=('dir:/boot:boot' 'lvm:bsv-deian-app-vg/root:lv-root' 'lvm:vg-store/lv-store:lv-store')
 
 # LOAD user config from file
-#source $(dirname "${BASH_SOURCE[0]}")/borg-em.conf
+# source $(dirname "${BASH_SOURCE[0]}")/borg-em.conf
 source /etc/borg-em.conf
 
 #export to borg backup 
@@ -33,6 +33,13 @@ if [ -d /mnt/$BORG_TEMP_DIR ]
 then
 	echo -e "\n\n !!!!!! /mnt/$BORG_TEMP_DIR directory exists. STOP for Danger  !!!!!! \n\n"
   echo -e "Check the directory config. Delete the directory if it is Useless.\n\n"
+  exit 1
+fi
+
+# CHECK some Config: Backups & BORG_REPO
+if [ -z $BORG_REPO ] || [ -z $Backups ]
+then
+	echo -e "\n\n !!!!!! Invalid Config. Backups or BORG_REPO was not setted. Check borg-em.conf  !!!!!! \n\n"
   exit 1
 fi
 
@@ -49,7 +56,7 @@ do
     backup_paths+=(${arr[1]})
     backup_names+=(${arr[2]})
   else
-    echo 'ERROR'${#arr[@]}
+    echo -e "\n\n !!!!!! Invalid Config of [Backups]:  $backup  !!!!!! \n\n"
     exit 1
   fi
 done
@@ -59,9 +66,9 @@ if [ $1 ]
 then
   echo -e "\n Em Borg Script v$BORG_EM_VERSION  (By emeric)"
   echo -e "-    automatic backup with borg"
-  echo -e "\n Call Borg:"
+  echo -e "\n CALL: borg $@ "
   echo -e "────────────────────────────────────────────────────────────"
-  borg $1
+  borg $@
   exit
 fi
 

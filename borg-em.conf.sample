@@ -10,12 +10,13 @@
 # Examples
 #   Backups=('dir:/boot:boot')
 #   Backups=('dir:/boot:boot' 'lvm:/dev/bsv-deian-app-vg/root:lv-root' 'lvm:/dev/vg-store/lv-store:lv-store') 
-Backups=('dir:/:root')
+Backups=
 
 # BORG REPO
 # BORG_REPO='ssh://backup@58.57.39.74:10002/./'  #SSH use rsakey and borg root path is seting
 # BORG_REPO='/path/to/repo'                      # user local repo
-BORG_REPO='/mnt/borgs/debian'                #SSH use rsakey
-BORG_PASSPHRASE=''
+BORG_REPO=""
 
-MAIL_TO=uer@mail.com
+BORG_PASSPHRASE=""
+
+MAIL_TO=user@mail.com
