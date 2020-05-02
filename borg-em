@@ -28,14 +28,6 @@ source /etc/borg-em.conf
 export BORG_REPO                
 export BORG_PASSPHRASE
 
-# CHECK BORG_TEMP_DIR
-if [ -d /mnt/$BORG_TEMP_DIR ]
-then
-	echo -e "\n\n !!!!!! /mnt/$BORG_TEMP_DIR directory exists. STOP for Danger  !!!!!! \n\n"
-  echo -e "Check the directory config. Delete the directory if it is Useless.\n\n"
-  exit 1
-fi
-
 # CHECK some Config: Backups & BORG_REPO
 if [ -z $BORG_REPO ] || [ -z $Backups ]
 then
@@ -232,6 +224,13 @@ function main {
 
 # Create & Moving into the temprary directory, 
 # the relative path will be backup as the root of archive
+# CHECK BORG_TEMP_DIR
+if [ -d /mnt/$BORG_TEMP_DIR ]
+then
+	echo -e "\n\n !!!!!! /mnt/$BORG_TEMP_DIR directory exists. STOP for Danger  !!!!!! \n\n"
+  echo -e "Check the directory config. Delete the directory if it is Useless.\n\n"
+  exit 1
+fi
 mkdir /mnt/$BORG_TEMP_DIR
 cd /mnt/$BORG_TEMP_DIR
 

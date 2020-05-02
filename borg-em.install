@@ -29,11 +29,13 @@ then
 
     # Reload systemd just in case unit files changed
     systemctl daemon-reload
+    systemctl reset-failed
 
     systemctl enable borg-em.timer
     systemctl start borg-em.timer
 
     # Print advice
+    echo "-------------------------------------------"    
     echo "Install Done!"
     echo "  service borg-em.service & borg-em.timer was setuped. "
     echo "  The timer started."
@@ -63,7 +65,8 @@ then
     # Reload systemd just in case unit files changed
     systemctl daemon-reload
     systemctl reset-failed
-
+    
+    echo "-------------------------------------------"
     echo "Uninstall Done!!"
     echo "All service & timer was removed."
 
