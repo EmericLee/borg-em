@@ -2,6 +2,7 @@
 Borg-em Script v0.3
 -
 Automatic backup helper for 'borg backup'.  Support lvm cron snapshot &amp; multiple soure.
+
 Writte by emeric (kometo@gmail.com)
 
 Read more: 基于Borg的Linux 整机备份的单点集群解决方案 http://lee.kometo.com/archives/1253
