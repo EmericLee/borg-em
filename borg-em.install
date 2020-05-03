@@ -39,14 +39,19 @@ then
     echo "Install Done!"
     echo "  service borg-em.service & borg-em.timer was setuped. "
     echo "  The timer started."
-    echo ""
-    echo "Now you can:"
-    echo "  sudo systemctl stop|start borg-em.timer   #stop or start timer"
-    echo "  sudo ./borg-em.install uninstall          #undo install "
-    echo "  borg-em                                   #run backup"
-    echo "  borg-em list                              #show list of achive"
-    echo "  vim borg-em.timer                         #config timer"
-    echo "  vim borg-em.conf                          #edit config"
+    
+    echo "Next Step:"
+    echo "  vim $DIR/borg-em.conf  ( = vim /etc/borg-em.conf)   #Edit the conf file before do anything."
+    echo "  vim $DIR/borg-em.timer                              #(optional) Config timer, reinstall atfer edit."
+    echo "  borg-em                                             #(optional) Run backup manully first"
+
+    echo "other command:"
+    echo "  systemctl stop|start borg-em.timer                  #stop or start timer"
+    echo "  ./borg-em.install                                   #Reinstall after edit unit files of timer & service"
+    echo "  ./borg-em.install uninstall                         #Undo install. Cleare all "
+    echo "  borg-em                                             #Run backup manully"
+    echo "  borg-em list                                        #Show list of achive"
+
 
 elif [ $1 = "uninstall" ]
 then
