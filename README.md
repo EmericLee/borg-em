@@ -1,16 +1,16 @@
 
 Borg-em Script v0.3
 -
-Automatic backup helper for 'borg backup'.  Support lvm cron snapshot &amp; multiple soure.
 
+Automatic backup helper for 'borg backup'.  Support lvm cron snapshot &amp; multiple soure. Can send notice email as your wish.
 Writte by emeric (kometo@gmail.com)
 
-Read more: 基于Borg的Linux 整机备份的单点集群解决方案 http://lee.kometo.com/archives/1253
+---
 
-    Service name:   borg-em.service
-    Timer name:     borg-em.timer
-    conf file:      /etc/borg-em.conf
-    
+一个BorgBackup的自动备份辅助脚本，支持虚拟卷（LVM）、快照（Snapshot)、多源配置、定时运行，可以向指定邮箱发送备份完成情况。如果需要一个包含集中式备份服务器的完整解决方案，可以阅读这篇文章：基于Borg的Linux 整机备份的单点集群解决方案 http://lee.kometo.com/archives/1253
+
+---
+  
 ## Quick install
     
     git clone https://github.com/EmericLee/borg-em.git             #Clone source to some where
@@ -32,4 +32,7 @@ Read more: 基于Borg的Linux 整机备份的单点集群解决方案 http://lee
     vim borg-em.conf                          #edit config anytime
     vim borg-em.timer                         #config timer
     
-
+## Basic
+    Service name:   borg-em.service
+    Timer name:     borg-em.timer
+    conf file:      /etc/borg-em.conf
