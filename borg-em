@@ -53,17 +53,6 @@ do
   fi
 done
 
-# ---------------  redirect call to borg backup  ----------------------
-if [ $1 ]
-then
-  echo -e "\n Em Borg Script v$BORG_EM_VERSION  (By emeric)"
-  echo -e "-    automatic backup with borg"
-  echo -e "\n CALL: borg $@ "
-  echo -e "────────────────────────────────────────────────────────────"
-  borg $@
-  exit
-fi
-
 # ---------------  FUNCTIONS  ----------------------
 LOG_ECHO=""
 function ec {
@@ -92,21 +81,10 @@ MAIL
 
 function main {
 
-  ec "\n\n"
-  ec " Em Borg Script v$BORG_EM_VERSION  "
-  ec " --  automatic backup with borg."
-  ec "     Writte by emeric (kometo@gmail.com)"
-  ec "\n"
-  ec " HOST:      $HOSTNAME "
-  ec " BACKUPS:   ${Backups[*]}"
-  ec " BORG_REPO: $BORG_REPO"
-  ec " ARCHIVE:   $BORG_REPO::$BORG_ARCHIVE"
-  ec " MAIL_TO:   $MAIL_TO"
-  ec "\n\n"
-  
-  
   #####################################
   #prepare....
+  ec "────────────────────────────────────────────────────────────"
+  ec "     Borg-em backup staring...."
   ec "────────────────────────────────────────────────────────────"
   ec ">>>> Prepare Data.......\n"
 
@@ -170,9 +148,9 @@ function main {
   # Prune the repo of extra backups
   ec "\n\n>> Prune...."
   borg prune -v --prefix $BORG_PREFIX     \
-    --keep-hourly=24                      \
-    --keep-daily=30                       \
-    --keep-monthly=24                     \
+    --keep-daily=14                       \
+    --keep-weekly=5                     \
+    --keep-monthly=24                   \
     --keep-yearly=100
 
   ec "\n>> Print disk usage...."
@@ -219,6 +197,32 @@ function main {
   return $exit_code
 }
 
+
+# ---------------  Starting.......  ----------------------
+
+  ec "\n\n"
+  echo -e "────────────────────────────────────────────────────────────"
+  ec " Em Borg Script v$BORG_EM_VERSION  "
+  ec " --  automatic backup with borg."
+  ec "     Writte by emeric (kometo@gmail.com)"
+  ec "\n"
+  ec " HOST:      $HOSTNAME "
+  ec " BACKUPS:   ${Backups[*]}"
+  ec " BORG_REPO: $BORG_REPO"
+  ec " ARCHIVE:   $BORG_REPO::$BORG_ARCHIVE"
+  ec " MAIL_TO:   $MAIL_TO"
+  ec "────────────────────────────────────────────────────────────"
+  ec "\n\n"
+
+# ---------------  redirect call to borg backup  ----------------------  
+if [ $1 ]
+then
+  ec "────────────────────────────────────────────────────────────"
+  ec "     Redirect Call ...."
+  ec "────────────────────────────────────────────────────────────"
+  borg $@
+  exit
+fi
 
 # ---------------     MAIN   ----------------------
 
