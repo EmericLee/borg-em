@@ -216,18 +216,6 @@ function finally {
 }
 
 
-# ---------------     MAIN   ----------------------
-
-# Create & Moving into the temprary directory, 
-# the relative path will be backup as the root of archive
-# CHECK BORG_TEMP_DIR
-if [ -d /mnt/$BORG_TEMP_DIR ]
-then
-	echo -e "\n\n !!!!!! /mnt/$BORG_TEMP_DIR directory exists. STOP for Danger  !!!!!! \n\n"
-  echo -e "Check the directory config. Umount & Delete the directory carfully\n\n"
-  exit 1
-fi
-
 # ---------------  redirect call to borg backup  ----------------------  
 if [ $1 ]
 then
@@ -239,7 +227,19 @@ then
   exit
 fi
 
-# Run main
+# ---------------     MAIN  backup_create  ----------------------
+
+# Create & Moving into the temprary directory, 
+# the relative path will be backup as the root of archive
+# CHECK BORG_TEMP_DIR
+if [ -d /mnt/$BORG_TEMP_DIR ]
+then
+	echo -e "\n\n !!!!!! /mnt/$BORG_TEMP_DIR directory exists. STOP for Danger  !!!!!! \n\n"
+  echo -e "Check the directory config. Umount & Delete the directory carfully\n\n"
+  exit 1
+fi
+
+# Run backup
 trap finally EXIT
 mkdir /mnt/$BORG_TEMP_DIR
 cd /mnt/$BORG_TEMP_DIR
