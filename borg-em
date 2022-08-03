@@ -181,13 +181,13 @@ function finally {
       if [ $backup_mode = 'dir' ]
       then
         ec ">> [dir] $backup_path <==> $backup_name"
-        umount /mnt/$BORG_TEMP_DIR/$backup_name
-        rm -df /mnt/$BORG_TEMP_DIR/$backup_name
+        # umount /mnt/$BORG_TEMP_DIR/$backup_name
+        # rm -df /mnt/$BORG_TEMP_DIR/$backup_name
       elif [ $backup_mode = 'lvm' ]
       then
         ec ">> [lvm] $backup_path <==> $backup_name"
-        umount /mnt/$BORG_TEMP_DIR/$backup_name
-        rm -df /mnt/$BORG_TEMP_DIR/$backup_name
+        # umount /mnt/$BORG_TEMP_DIR/$backup_name
+        # rm -df /mnt/$BORG_TEMP_DIR/$backup_name
         lvremove -f ${backup_path%/*}/emborg-snapshot-$backup_name
       fi
     done
