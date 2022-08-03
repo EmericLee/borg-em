@@ -173,9 +173,7 @@ function main {
   return $exit_code
 }
 
-function finally{
-  ########################################
-  #   Cleare temprery
+function finally {
   ec "────────────────────────────────────────────────────────────"
   ec ">>>> Do finally Clear .......\n"
 
