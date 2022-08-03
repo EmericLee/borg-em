@@ -150,9 +150,6 @@ function main {
     --keep-monthly=24                   \
     --keep-yearly=100
 
-  ec "\n>> Disk usage...."
-  df -hT | grep --color=never -v '/docker/\|tmpfs'  
-
   ########################################
   #   finishing
   if [ $exit_code -ne 0 ]
