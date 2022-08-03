@@ -86,15 +86,15 @@ function main {
   ec "────────────────────────────────────────────────────────────"
   ec "     Borg-em backup staring...."
   ec "────────────────────────────────────────────────────────────"
-  ec ">>>> Prepare Data.......\n"
+  ec ">>>> Target ARCHIVE:   $BORG_REPO::$BORG_ARCHIVE \n"  
 
   # Prepare info.backup
-  echo -e "\n\nBackup config string:\n--------------------------------------" >> /mnt/$BORG_TEMP_DIR/info.backup
-  echo "${Backups[@]}" >> /mnt/$BORG_TEMP_DIR/info.backup
-  echo -e "\n\nThe output of (df):\n--------------------------------------" >> /mnt/$BORG_TEMP_DIR/info.backup
-  df -hT | grep --color=never -v '/docker/\|tmpfs' >> /mnt/$BORG_TEMP_DIR/info.backup
-  echo -e "\n\nThe output of (lvs):\n--------------------------------------" >> /mnt/$BORG_TEMP_DIR/info.backup
-  lvs >> /mnt/$BORG_TEMP_DIR/info.backup
+  ec "\nBackup config string:--------------------------------------\n"
+  ec "${Backups[@]}"
+  ec "\nThe output of (df):----------------------------------------\n"
+  df -hT | grep --color=never -v '/docker/\|tmpfs'
+  ec "\nThe output of (lvs):---------------------------------------\n"
+  lvs
 
   # Prepare configs
   for index in "${!backup_modes[@]}"
@@ -154,12 +154,30 @@ function main {
     --keep-yearly=100
 
   ec "\n>> Print disk usage...."
-  df -hT | grep --color=never -v '/docker/\|tmpfs'
+  df -hT | grep --color=never -v '/docker/\|tmpfs'  
 
+  ########################################
+  #   finishing
+  if [ $exit_code -ne 0 ]
+  then
+    ec "\n\n"
+    ec "────────────────────────────────────────────────────────────"
+    ec "-          Backup Failed  (code:$exit_code $?)       "
+    ec "────────────────────────────────────────────────────────────"
+  else
+    ec "\n\n"
+    ec "────────────────────────────────────────────────────────────"
+    ec "-                Backup ALL DONE  "
+    ec "────────────────────────────────────────────────────────────"
+  fi
+  return $exit_code
+}
+
+function finally{
   ########################################
   #   Cleare temprery
   ec "────────────────────────────────────────────────────────────"
-  ec ">>>> Clear Temporary Data.......\n"
+  ec ">>>> Do finally Clear .......\n"
 
   for index in "${!backup_modes[@]}"
   do
@@ -180,28 +198,17 @@ function main {
     fi
   done
 
-  ########################################
-  #   finishing
-  if [ $exit_code -ne 0 ]
-  then
-    ec "\n\n"
-    ec "────────────────────────────────────────────────────────────"
-    ec "-          Backup Failed  (code:$exit_code $?)       "
-    ec "────────────────────────────────────────────────────────────"
-  else
-    ec "\n\n"
-    ec "────────────────────────────────────────────────────────────"
-    ec "-                ALL DONE  "
-    ec "────────────────────────────────────────────────────────────"
-  fi
-  return $exit_code
+  umount /mnt/$BORG_TEMP_DIR/*
+  rm -f /mnt/$BORG_TEMP_DIR/*
+  rm -df /mnt/$BORG_TEMP_DIR
 }
 
+trap finally EXIT
 
 # ---------------  Starting.......  ----------------------
 
   ec "\n\n"
-  echo -e "────────────────────────────────────────────────────────────"
+  ec "────────────────────────────────────────────────────────────"
   ec " Em Borg Script v$BORG_EM_VERSION  "
   ec " --  automatic backup with borg."
   ec "     Writte by emeric (kometo@gmail.com)"
@@ -209,7 +216,6 @@ function main {
   ec " HOST:      $HOSTNAME "
   ec " BACKUPS:   ${Backups[*]}"
   ec " BORG_REPO: $BORG_REPO"
-  ec " ARCHIVE:   $BORG_REPO::$BORG_ARCHIVE"
   ec " MAIL_TO:   $MAIL_TO"
   ec "────────────────────────────────────────────────────────────"
   ec "\n\n"
@@ -232,7 +238,7 @@ fi
 if [ -d /mnt/$BORG_TEMP_DIR ]
 then
 	echo -e "\n\n !!!!!! /mnt/$BORG_TEMP_DIR directory exists. STOP for Danger  !!!!!! \n\n"
-  echo -e "Check the directory config. Delete the directory if it is Useless.\n\n"
+  echo -e "Check the directory config. Umount & Delete the directory carfully\n\n"
   exit 1
 fi
 mkdir /mnt/$BORG_TEMP_DIR
@@ -252,6 +258,5 @@ else
 fi
 
 #Clear ALL
-rm -f /mnt/$BORG_TEMP_DIR/*
-rm -df /mnt/$BORG_TEMP_DIR
+finally
 exit $exit_code
