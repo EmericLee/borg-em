@@ -91,10 +91,6 @@ function main {
   # Prepare info.backup
   ec "\n>>>> Backup config string"
   ec "${Backups[@]}"
-  ec "\n>>>> The output of (df)"
-  df -hT | grep --color=never -v '/docker/\|tmpfs'
-  ec "\n>>>> The output of (lvs)"
-  lvs
 
   # Prepare configs
   ec "\n>>>> Backup Dirs:"
@@ -124,7 +120,7 @@ function main {
 
   ########################################
   #   Do backup
-  ec "\n\n>>>> Borg backup................."
+  ec "\n>>>> Backuping...."
 
   # -v verbose -s show stats, -p show process, -x one-file-system
   borg create  -v -s              \
@@ -143,12 +139,17 @@ function main {
   exit_code=$?                       # keep code
 
   # Prune the repo of extra backups
-  ec "\n\n>> Prune...."
+  ec "\n>>>> Prune...."
   borg prune -v --prefix $BORG_PREFIX     \
     --keep-daily=14                       \
     --keep-weekly=5                     \
     --keep-monthly=24                   \
     --keep-yearly=100
+
+  ec "\n\n>>>> The output of (df)"
+  df -hT | grep --color=never -v '/docker/\|tmpfs'
+  ec "\n>>>> The output of (lvs)"
+  lvs
 
   ########################################
   #   finishing
@@ -193,7 +194,7 @@ function finally {
     done
 
     umount /mnt/$BORG_TEMP_DIR/*
-    rm -f /mnt/$BORG_TEMP_DIR/*
+    rm -df /mnt/$BORG_TEMP_DIR/*
     rm -df /mnt/$BORG_TEMP_DIR
   fi
 }
@@ -202,7 +203,7 @@ trap finally EXIT
 
 # ---------------  Starting.......  ----------------------
 
-  ec "\n\n"
+  ec "\n"
   ec "────────────────────────────────────────────────────────────"
   ec " Em Borg Script v$BORG_EM_VERSION  "
   ec " --  automatic backup with borg."
@@ -213,13 +214,13 @@ trap finally EXIT
   ec " BORG_REPO: $BORG_REPO"
   ec " MAIL_TO:   $MAIL_TO"
   ec "────────────────────────────────────────────────────────────"
-  ec "\n\n"
+  ec "\n"
 
 # ---------------  redirect call to borg backup  ----------------------  
 if [ $1 ]
 then
   ec "────────────────────────────────────────────────────────────"
-  ec "     Redirect Call ...."
+  ec "     Redirect Call: borg $@ ..."
   ec "────────────────────────────────────────────────────────────"
   borg $@
   exit
