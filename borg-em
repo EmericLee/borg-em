@@ -79,7 +79,23 @@ MAIL
   fi
 }
 
-function main {
+function echo_msg_hello {
+  # ---------------  Starting.......  ----------------------
+  ec "\n"
+  ec "────────────────────────────────────────────────────────────"
+  ec " Em Borg Script v$BORG_EM_VERSION  "
+  ec " --  automatic backup with borg."
+  ec "     Writte by emeric (kometo@gmail.com)"
+  ec ""
+  ec " HOST:      $HOSTNAME "
+  ec " BACKUPS:   ${Backups[*]}"
+  ec " BORG_REPO: $BORG_REPO"
+  ec " MAIL_TO:   $MAIL_TO"
+  ec "────────────────────────────────────────────────────────────"
+  ec "\n"
+}
+
+function backup_create {
 
   #####################################
   #prepare....
@@ -199,32 +215,6 @@ function finally {
   fi
 }
 
-trap finally EXIT
-
-# ---------------  Starting.......  ----------------------
-
-  ec "\n"
-  ec "────────────────────────────────────────────────────────────"
-  ec " Em Borg Script v$BORG_EM_VERSION  "
-  ec " --  automatic backup with borg."
-  ec "     Writte by emeric (kometo@gmail.com)"
-  ec ""
-  ec " HOST:      $HOSTNAME "
-  ec " BACKUPS:   ${Backups[*]}"
-  ec " BORG_REPO: $BORG_REPO"
-  ec " MAIL_TO:   $MAIL_TO"
-  ec "────────────────────────────────────────────────────────────"
-  ec "\n"
-
-# ---------------  redirect call to borg backup  ----------------------  
-if [ $1 ]
-then
-  ec "────────────────────────────────────────────────────────────"
-  ec "     Redirect Call: borg $@ ..."
-  ec "────────────────────────────────────────────────────────────"
-  borg $@
-  exit
-fi
 
 # ---------------     MAIN   ----------------------
 
@@ -237,11 +227,24 @@ then
   echo -e "Check the directory config. Umount & Delete the directory carfully\n\n"
   exit 1
 fi
-mkdir /mnt/$BORG_TEMP_DIR
-cd /mnt/$BORG_TEMP_DIR
+
+# ---------------  redirect call to borg backup  ----------------------  
+if [ $1 ]
+then
+  echo_msg_hello
+  ec "────────────────────────────────────────────────────────────"
+  ec "     Redirect Call: borg $@ ..."
+  ec "────────────────────────────────────────────────────────────"
+  borg $@
+  exit
+fi
 
 # Run main
-main | tee -a borg.log
+trap finally EXIT
+mkdir /mnt/$BORG_TEMP_DIR
+cd /mnt/$BORG_TEMP_DIR
+echo_msg_hello | tee -a borg.log 
+backup_create | tee -a borg.log
 exit_code=$?                       # keep code
 
 # Get log and send mail
