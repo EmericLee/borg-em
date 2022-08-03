@@ -89,14 +89,15 @@ function main {
   ec ">>>> Target ARCHIVE:   $BORG_REPO::$BORG_ARCHIVE \n"  
 
   # Prepare info.backup
-  ec "\nBackup config string:--------------------------------------\n"
+  ec "\n>>>> Backup config string"
   ec "${Backups[@]}"
-  ec "\nThe output of (df):----------------------------------------\n"
+  ec "\n>>>> The output of (df)"
   df -hT | grep --color=never -v '/docker/\|tmpfs'
-  ec "\nThe output of (lvs):---------------------------------------\n"
+  ec "\n>>>> The output of (lvs)"
   lvs
 
   # Prepare configs
+  ec "\n>>>> Backup Dirs:"
   for index in "${!backup_modes[@]}"
   do
     backup_mode=${backup_modes["$index"]}
@@ -119,17 +120,13 @@ function main {
       ec ">> !!!ERROR!!! Unknow mode  $backup_mode"
       exit
     fi
-
   done
-
 
   ########################################
   #   Do backup
-  ec "────────────────────────────────────────────────────────────"
-  ec ">>>> Borg backup........................................\n"
+  ec "\n\n>>>> Borg backup................."
 
   # -v verbose -s show stats, -p show process, -x one-file-system
-  ec ">> Backup...."
   borg create  -v -s              \
     --compression lz4             \
     --exclude-caches              \
@@ -153,7 +150,7 @@ function main {
     --keep-monthly=24                   \
     --keep-yearly=100
 
-  ec "\n>> Print disk usage...."
+  ec "\n>> Disk usage...."
   df -hT | grep --color=never -v '/docker/\|tmpfs'  
 
   ########################################
@@ -167,38 +164,41 @@ function main {
   else
     ec "\n\n"
     ec "────────────────────────────────────────────────────────────"
-    ec "-                Backup ALL DONE  "
+    ec "-            Backup ALL DONE  "
     ec "────────────────────────────────────────────────────────────"
   fi
   return $exit_code
 }
 
 function finally {
-  ec "────────────────────────────────────────────────────────────"
-  ec ">>>> Do finally Clear .......\n"
+  if [ -d /mnt/$BORG_TEMP_DIR ]
+  then
+    ec "\n\n────────────────────────────────────────────────────────────"
+    ec ">>>> Do finally Clear ......."
 
-  for index in "${!backup_modes[@]}"
-  do
-    backup_mode=${backup_modes["$index"]}
-    backup_path=${backup_paths["$index"]}
-    backup_name=${backup_names["$index"]}
-    if [ $backup_mode = 'dir' ]
-    then
-      ec ">> [dir] $backup_path <==> $backup_name"
-      umount /mnt/$BORG_TEMP_DIR/$backup_name
-      rm -df /mnt/$BORG_TEMP_DIR/$backup_name
-    elif [ $backup_mode = 'lvm' ]
-    then
-      ec ">> [lvm] $backup_path <==> $backup_name"
-      umount /mnt/$BORG_TEMP_DIR/$backup_name
-      rm -df /mnt/$BORG_TEMP_DIR/$backup_name
-      lvremove -f ${backup_path%/*}/emborg-snapshot-$backup_name
-    fi
-  done
+    for index in "${!backup_modes[@]}"
+    do
+      backup_mode=${backup_modes["$index"]}
+      backup_path=${backup_paths["$index"]}
+      backup_name=${backup_names["$index"]}
+      if [ $backup_mode = 'dir' ]
+      then
+        ec ">> [dir] $backup_path <==> $backup_name"
+        umount /mnt/$BORG_TEMP_DIR/$backup_name
+        rm -df /mnt/$BORG_TEMP_DIR/$backup_name
+      elif [ $backup_mode = 'lvm' ]
+      then
+        ec ">> [lvm] $backup_path <==> $backup_name"
+        umount /mnt/$BORG_TEMP_DIR/$backup_name
+        rm -df /mnt/$BORG_TEMP_DIR/$backup_name
+        lvremove -f ${backup_path%/*}/emborg-snapshot-$backup_name
+      fi
+    done
 
-  umount /mnt/$BORG_TEMP_DIR/*
-  rm -f /mnt/$BORG_TEMP_DIR/*
-  rm -df /mnt/$BORG_TEMP_DIR
+    umount /mnt/$BORG_TEMP_DIR/*
+    rm -f /mnt/$BORG_TEMP_DIR/*
+    rm -df /mnt/$BORG_TEMP_DIR
+  fi
 }
 
 trap finally EXIT
@@ -210,7 +210,7 @@ trap finally EXIT
   ec " Em Borg Script v$BORG_EM_VERSION  "
   ec " --  automatic backup with borg."
   ec "     Writte by emeric (kometo@gmail.com)"
-  ec "\n"
+  ec ""
   ec " HOST:      $HOSTNAME "
   ec " BACKUPS:   ${Backups[*]}"
   ec " BORG_REPO: $BORG_REPO"
@@ -255,6 +255,4 @@ else
   lmail "Borg Done ($HOSTNAME)" "$log"
 fi
 
-#Clear ALL
-finally
 exit $exit_code
